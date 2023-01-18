@@ -1,3 +1,4 @@
+local QBCore = exports['qb-core']:GetCoreObject()
 local cornerselling = false
 local hasTarget = false
 local lastPed = {}
@@ -18,7 +19,8 @@ local function LoadAnimDict(dict)
 end
 
 local function TooFarAway()
-    QBCore.Functions.Notify(Lang:t("error.too_far_away"), 'error')
+    --QBCore.Functions.Notify(Lang:t("error.too_far_away"), 'error')
+    exports['okokNotify']:Alert('Selling Drugs', Lang:t("error.too_far_away"), 5000, 'error')
     LocalPlayer.state:set("inv_busy", false, true)
     cornerselling = false
     hasTarget = false
@@ -27,7 +29,8 @@ end
 
 local function PoliceCall()
     if Config.PoliceCallChance <= math.random(1, 100) then
-        TriggerServerEvent('police:server:policeAlert', 'Drug sale in progress')
+        --TriggerServerEvent('police:server:policeAlert', 'Drug sale in progress')
+        exports['ps-dispatch']:DrugSale()
     end
 end
 
@@ -90,11 +93,14 @@ local function RobberyPed()
                     if not Config.UseTarget and #(pos - pedpos) < 1.5 then
                         if not textDrawn then
                             textDrawn = true
-                            exports['qb-core']:DrawText(Lang:t("info.pick_up_button"))
+                           -- exports['qb-core']:DrawText(Lang:t("info.pick_up_button"))
+                            exports['okokTextUI']:Open(Lang:t("info.pick_up_button"), 'darkgreen', 'right')
                         end
                         if IsControlJustReleased(0, 38) then
                             exports['qb-core']:KeyPressed()
+                            exports['okokTextUI']:Close()
                             textDrawn = false
+                            exports['okokTextUI']:Close()
                             RequestAnimDict("pickup_object")
                             while not HasAnimDictLoaded("pickup_object") do
                                 Wait(0)
@@ -109,6 +115,7 @@ local function RobberyPed()
                         end
                     end
                 else
+                    
                     local playerPed = PlayerPedId()
                     local pos = GetEntityCoords(playerPed)
                     local pedpos = GetEntityCoords(stealingPed)
@@ -141,7 +148,7 @@ local function SellToPed(ped)
 
     local drugType = math.random(1, #availableDrugs)
     local bagAmount = math.random(1, availableDrugs[drugType].amount)
-    if bagAmount > 15 then bagAmount = math.random(9, 15) end
+    if bagAmount > 5 then bagAmount = math.random(1, 4) end
 
     currentOfferDrug = availableDrugs[drugType]
 
@@ -185,7 +192,8 @@ local function SellToPed(ped)
             local pedDist2 = #(coords2 - pedCoords2)
             if getRobbed <= Config.RobberyChance then
                 TriggerServerEvent('qb-drugs:server:robCornerDrugs', drugType, bagAmount)
-                QBCore.Functions.Notify(Lang:t("info.has_been_robbed", {bags = bagAmount, drugType = availableDrugs[drugType].label}))
+                --QBCore.Functions.Notify(Lang:t("info.has_been_robbed", {bags = bagAmount, drugType = availableDrugs[drugType].label}))
+                exports['okokNotify']:Alert('Selling Drugs', Lang:t("info.has_been_robbed"), 5000, 'error')
                 stealingPed = ped
                 stealData = {
                     item = availableDrugs[drugType].item,
@@ -214,7 +222,8 @@ local function SellToPed(ped)
                                     label = Lang:t("info.target_drug_offer", {bags = bagAmount, drugLabel = currentOfferDrug.label, randomPrice = randomPrice}),
                                     action = function(entity)
                                         if IsPedInAnyVehicle(PlayerPedId(), false) then
-					    QBCore.Functions.Notify(Lang:t("error.in_vehicle"), 'error')
+					    --QBCore.Functions.Notify(Lang:t("error.in_vehicle"), 'error')
+                        exports['okokNotify']:Alert('Selling Drugs', Lang:t("error.in_vehicle"), 5000, 'error')
 					    hasTarget = false
                                             SetPedKeepTask(entity, false)
                                             SetEntityAsNoLongerNeeded(entity)
@@ -223,7 +232,7 @@ local function SellToPed(ped)
                                             exports['qb-target']:RemoveZone('sellingPed')
 					    return
 					else
-                                            QBCore.Functions.Progressbar("cornerSelling", Lang:t("info.selling_to_ped"), '5000', false, false, {
+                                            QBCore.Functions.Progressbar("cornerSelling", Lang:t("info.selling_to_ped"), '4500', false, false, {
 					    disableMovement = true,
 				            disableCarMovement = true,
 					    disableMouse = false,
@@ -249,7 +258,8 @@ local function SellToPed(ped)
                                     icon = 'fas fa-x',
                                     label = 'Decline offer',
                                     action = function(entity)
-                                        QBCore.Functions.Notify(Lang:t("error.offer_declined"), 'error')
+                                       -- QBCore.Functions.Notify(Lang:t("error.offer_declined"), 'error')
+                                        exports['okokNotify']:Alert('Selling Drugs', Lang:t("error.offer_declined"), 5000, 'error')
                                         hasTarget = false
                                         SetPedKeepTask(entity, false)
                                         SetEntityAsNoLongerNeeded(entity)
@@ -264,13 +274,17 @@ local function SellToPed(ped)
                     elseif not Config.UseTarget then
                         if not textDrawn then
                             textDrawn = true
-                            exports['qb-core']:DrawText(Lang:t("info.drug_offer", {bags = bagAmount, drugLabel = currentOfferDrug.label, randomPrice = randomPrice}))
+                           -- exports['qb-core']:DrawText(Lang:t("info.drug_offer", {bags = bagAmount, drugLabel = currentOfferDrug.label, randomPrice = randomPrice}))
+                            exports['okokTextUI']:Open(Lang:t("info.drug_offer", {bags = bagAmount, drugLabel = currentOfferDrug.label, randomPrice = randomPrice}), 'darkgreen', 'right')
                         end
                         if IsControlJustPressed(0, 38) then
 			    if IsPedInAnyVehicle(PlayerPedId(), false) then
-			        QBCore.Functions.Notify(Lang:t("error.in_vehicle"), 'error')
+			        --QBCore.Functions.Notify(Lang:t("error.in_vehicle"), 'error')
+                    exports['okokNotify']:Alert('Selling Drugs', Lang:t("error.in_vehicle"), 5000, 'error')
 				exports['qb-core']:KeyPressed()
+                exports['okokTextUI']:Close()
 				textDrawn = false
+                exports['okokTextUI']:Close()
 				hasTarget = false
                                 SetPedKeepTask(ped, false)
                                 SetEntityAsNoLongerNeeded(ped)
@@ -279,8 +293,9 @@ local function SellToPed(ped)
                                 break
 			    else
 				exports['qb-core']:KeyPressed()
+                exports['okokTextUI']:Close()
 				textDrawn = false
-				QBCore.Functions.Progressbar("cornerSelling", Lang:t("info.selling_to_ped"), '5000', false, false, {
+				QBCore.Functions.Progressbar("cornerSelling", Lang:t("info.selling_to_ped"), '4500', false, false, {
 				disableMovement = true,
 				disableCarMovement = true,
 				disableMouse = false,
@@ -301,8 +316,10 @@ local function SellToPed(ped)
                         end
                         if IsControlJustPressed(0, 47) then
                             exports['qb-core']:KeyPressed()
+                            exports['okokTextUI']:Close()
                             textDrawn = false
-                            QBCore.Functions.Notify(Lang:t("error.offer_declined"), 'error')
+                            --QBCore.Functions.Notify(Lang:t("error.offer_declined"), 'error')
+                            exports['okokNotify']:Alert('Selling Drugs', Lang:t("error.offer_declined"), 5000, 'error')
                             hasTarget = false
                             SetPedKeepTask(ped, false)
                             SetEntityAsNoLongerNeeded(ped)
@@ -318,6 +335,7 @@ local function SellToPed(ped)
                     else
                         if textDrawn then
                             exports['qb-core']:HideText()
+                            exports['okokTextUI']:Close()
                             textDrawn = false
                         end
                     end
@@ -331,7 +349,7 @@ local function SellToPed(ped)
             end
             Wait(0)
         end
-        Wait(math.random(4000, 7000))
+        Wait(math.random(4000, 4500))
     end
 end
 
@@ -339,7 +357,8 @@ local function ToggleSelling()
     if not cornerselling then
         cornerselling = true
         LocalPlayer.state:set("inv_busy", true, true)
-        QBCore.Functions.Notify(Lang:t("info.started_selling_drugs"))
+       -- QBCore.Functions.Notify(Lang:t("info.started_selling_drugs"))
+        exports['okokNotify']:Alert('Selling Drugs', Lang:t("info.started_selling_drugs"), 5000, 'info')
         local startLocation = GetEntityCoords(PlayerPedId())
         CreateThread(function()
             while cornerselling do
@@ -370,7 +389,8 @@ local function ToggleSelling()
         stealData = {}
         cornerselling = false
         LocalPlayer.state:set("inv_busy", false, true)
-        QBCore.Functions.Notify(Lang:t("info.stopped_selling_drugs"))
+       -- QBCore.Functions.Notify(Lang:t("info.stopped_selling_drugs"))
+        exports['okokNotify']:Alert('Selling Drugs', Lang:t("info.stopped_selling_drugs"), 5000, 'info')
     end
 end
 
@@ -379,18 +399,21 @@ RegisterNetEvent('qb-drugs:client:cornerselling', function()
     QBCore.Functions.TriggerCallback('qb-drugs:server:cornerselling:getAvailableDrugs', function(result)
         if CurrentCops >= Config.MinimumDrugSalePolice then
 	    if IsPedInAnyVehicle(PlayerPedId(), false) then
-	        QBCore.Functions.Notify(Lang:t("error.in_vehicle"), 'error')
+	      --  QBCore.Functions.Notify(Lang:t("error.in_vehicle"), 'error')
+            exports['okokNotify']:Alert('Selling Drugs', Lang:t("error.in_vehicle"), 5000, 'error')
 	    else
                 if result then
                     availableDrugs = result
                     ToggleSelling()
                 else
-                    QBCore.Functions.Notify(Lang:t("error.has_no_drugs"), 'error')
+                   -- QBCore.Functions.Notify(Lang:t("error.has_no_drugs"), 'error')
+                    exports['okokNotify']:Alert('Selling Drugs', Lang:t("error.has_no_drugs"), 5000, 'error')
                     LocalPlayer.state:set("inv_busy", false, true)
                 end
 	    end
         else
-            QBCore.Functions.Notify(Lang:t("error.not_enough_police", {polices = Config.MinimumDrugSalePolice}), "error")
+           -- QBCore.Functions.Notify(Lang:t("error.not_enough_police", {polices = Config.MinimumDrugSalePolice}), "error")
+            exports['okokNotify']:Alert('Selling Drugs', Lang:t("error.not_enough_police"), 5000, 'error')
         end
     end)
 end)
@@ -402,7 +425,8 @@ end)
 RegisterNetEvent('qb-drugs:client:refreshAvailableDrugs', function(items)
     availableDrugs = items
     if #availableDrugs <= 0 then
-        QBCore.Functions.Notify(Lang:t("error.no_drugs_left"), 'error')
+        --QBCore.Functions.Notify(Lang:t("error.no_drugs_left"), 'error')
+        exports['okokNotify']:Alert('Selling Drugs', Lang:t("error.no_drugs_left"), 5000, 'error')
         cornerselling = false
         LocalPlayer.state:set("inv_busy", false, true)
     end
